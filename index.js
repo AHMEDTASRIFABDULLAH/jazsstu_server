@@ -1,12 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 app.use(express.json());
 
 const corsOptions = {
-  origin: ["https://creativehubtask.netlify.app"],
+  origin: ["http://localhost:5173"],
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -31,10 +31,46 @@ async function run() {
       const { department, studentId, registration } = req.query;
       const filter = {
         department: department,
-        registration_no: registration,
-        id_no: studentId,
+        registrationNo: registration,
+        idNo: studentId,
       };
       const result = await studentsCollection.find(filter).toArray();
+      res.send(result);
+    });
+    app.post("/studentsdata", async (req, res) => {
+      const studentsData = req.body;
+      const result = await studentsCollection.insertOne(studentsData);
+      res.send(result);
+    });
+    app.get("/getstudents", async (req, res) => {
+      const result = await studentsCollection.find().toArray();
+      res.send(result);
+    });
+    app.delete("/student-close/:id", async (req, res) => {
+      const id = req.params.id;
+      const qurey = { _id: new ObjectId(id) };
+      const result = await studentsCollection.deleteOne(qurey);
+      res.send(result);
+    });
+    app.get("/getstudents/:id", async (req, res) => {
+      const id = req.params.id;
+      const qurey = { _id: new ObjectId(id) };
+      const result = await studentsCollection.findOne(qurey);
+      res.send(result);
+    });
+    app.put("/update/:id", async (req, res) => {
+      const student = req.body;
+      const id = req.params.id;
+      const updated = {
+        $set: student,
+      };
+      const options = { upsert: true };
+      const filter = { _id: new ObjectId(id) };
+      const result = await studentsCollection.updateOne(
+        filter,
+        updated,
+        options
+      );
       res.send(result);
     });
   } finally {
